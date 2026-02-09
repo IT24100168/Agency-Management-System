@@ -1,0 +1,104 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed password
+  fullName  String?  @map("full_name")
+  role      String   @default("staff") // 'admin', 'staff', 'agent'
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  agentProfile      Agent?
+  accountingEntries Accounting[]
+
+  @@map("users")
+}
+
+model Agent {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // 'sub-agent', 'foreign'
+  email       String?
+  phone       String?
+  address     String?
+  contactInfo Json?    @map("contact_info") // For flexible storage
+  userId      String?  @unique @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User?       @relation(fields: [userId], references: [id])
+  candidates  Candidate[]
+
+  @@map("agents")
+}
+
+model Candidate {
+  id            String   @id @default(uuid())
+  passportNo    String   @unique @map("passport_no")
+  fullName      String   @map("full_name")
+  agentId       String?  @map("agent_id")
+  status        String   @default("Registered") // Registered, Medical, Visa, etc.
+  dob           DateTime?
+  gender        String?
+  contactNumber String?  @map("contact_number")
+  address       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  agent      Agent?           @relation(fields: [agentId], references: [id])
+  processing ProcessingStep[]
+  accounting Accounting[]
+  documents  Document[]
+
+  @@map("candidates")
+}
+
+model ProcessingStep {
+  id             String   @id @default(uuid())
+  candidateId    String   @map("candidate_id")
+  type           String   // Medical, Visa, Training, Embassy, Ticket
+  status         String   // Pending, Completed, Failed
+  notes          String?  @db.Text
+  completionDate DateTime? @map("completion_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("processing")
+}
+
+model Accounting {
+  id          String   @id @default(uuid())
+  candidateId String?  @map("candidate_id")
+  type        String   // income, expense
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  candidate Candidate? @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [createdBy], references: [id])
+
+  @@map("accounting")
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  candidateId String   @map("candidate_id")
+  name        String
+  filePath    String   @map("file_path") // Path relative to /public/uploads
+  fileType    String   @map("file_type")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
