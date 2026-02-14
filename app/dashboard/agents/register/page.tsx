@@ -26,8 +26,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useTransition } from "react"
 import { Textarea } from "@/components/ui/textarea"
 
+import { useRouter } from "next/navigation"
+
 export default function RegisterAgentPage() {
     const [isPending, startTransition] = useTransition()
+    const router = useRouter()
 
     const form = useForm<AgentFormValues>({
         resolver: zodResolver(agentFormSchema),
@@ -52,6 +55,8 @@ export default function RegisterAgentPage() {
                 alert(`Error: ${result.message}\n${result.error}`)
             } else if (result?.errors) {
                 alert(`Validation Error: ${JSON.stringify(result.errors)}`)
+            } else if (result?.redirect) {
+                router.push(result.redirect)
             }
         })
     }

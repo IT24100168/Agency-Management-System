@@ -15,7 +15,7 @@ type Transaction = {
     id: string
     type: string
     amount: number
-    description: string
+    description: string | null
     created_at: string
 }
 
@@ -43,7 +43,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600 flex items-center">
                             <ArrowDownCircle className="mr-2 h-5 w-5" />
-                            ${totalIncome.toFixed(2)}
+                            Rs. {totalIncome.toFixed(2)}
                         </div>
                     </CardContent>
                 </Card>
@@ -54,7 +54,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600 flex items-center">
                             <ArrowUpCircle className="mr-2 h-5 w-5" />
-                            ${totalExpense.toFixed(2)}
+                            Rs. {totalExpense.toFixed(2)}
                         </div>
                     </CardContent>
                 </Card>
@@ -64,7 +64,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                     </CardHeader>
                     <CardContent>
                         <div className={`text-2xl font-bold ${balance >= 0 ? "text-green-700" : "text-red-700"}`}>
-                            ${balance.toFixed(2)}
+                            Rs. {balance.toFixed(2)}
                         </div>
                     </CardContent>
                 </Card>
@@ -96,14 +96,14 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                                     transactions.map((t) => (
                                         <TableRow key={t.id}>
                                             <TableCell>{new Date(t.created_at).toLocaleDateString()}</TableCell>
-                                            <TableCell>{t.description}</TableCell>
+                                            <TableCell>{t.description || '-'}</TableCell>
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                     {t.type}
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-right font-mono">
-                                                {t.type === 'expense' ? '-' : '+'}${t.amount.toFixed(2)}
+                                                {t.type === 'expense' ? '-' : '+'}Rs. {t.amount.toFixed(2)}
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -140,7 +140,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Amount ($)</Label>
+                                <Label>Amount (Rs.)</Label>
                                 <Input name="amount" type="number" step="0.01" required placeholder="0.00" />
                             </div>
 

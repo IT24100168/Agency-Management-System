@@ -1,36 +1,15 @@
-
 "use client"
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 
-const data = [
-    {
-        name: "Jan",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-    {
-        name: "Feb",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-    {
-        name: "Mar",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-    {
-        name: "Apr",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-    {
-        name: "May",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-    {
-        name: "Jun",
-        total: Math.floor(Math.random() * 5000) + 1000,
-    },
-]
+interface OverviewChartProps {
+    data?: {
+        name: string
+        total: number
+    }[]
+}
 
-export function OverviewChart() {
+export function OverviewChart({ data = [] }: OverviewChartProps) {
     return (
         <ResponsiveContainer width="100%" height={350}>
             <BarChart data={data}>
@@ -46,11 +25,12 @@ export function OverviewChart() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => `Rs.${value}`}
                 />
                 <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [`Rs. ${value?.toLocaleString() ?? 0}`, 'Income']}
                 />
                 <Bar dataKey="total" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
             </BarChart>

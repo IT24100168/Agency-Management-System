@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import Link from 'next/link'
@@ -16,17 +17,10 @@ import {
     Menu
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useState } from 'react'
+import { handleSignOut } from '@/app/dashboard/signout-action'
 
 const routes = [
     {
@@ -66,23 +60,29 @@ const routes = [
     },
 ]
 
-export function Sidebar({ mobile = false }: { mobile?: boolean }) {
+interface SidebarProps {
+    mobile?: boolean
+    user?: any
+}
+
+export function Sidebar({ mobile = false, user }: SidebarProps) {
     const pathname = usePathname()
 
     return (
         <div className={cn("space-y-4 py-4 flex flex-col h-full bg-slate-900 text-white", mobile ? "w-full" : "w-64")}>
             <div className="px-3 py-2 flex-1">
-                <Link href="/dashboard" className="flex items-center pl-3 mb-14">
-                    <div className="relative w-8 h-8 mr-4">
-                        {/* Logo placeholder - using text for now */}
-                        <div className="bg-white rounded-full h-8 w-8 flex items-center justify-center">
-                            <span className="font-bold text-slate-900">A</span>
-                        </div>
+                <Link href="/dashboard" className="flex flex-col items-center mb-10 mt-4">
+                    <div className="relative w-24 h-24 mb-3">
+                        <img src="/logo.png" alt="Logo" className="rounded-lg w-full h-full object-contain bg-white p-1" />
                     </div>
-                    <h1 className="text-xl font-bold">AMS Portal</h1>
+                    <h1 className="text-xl font-bold text-center text-white">Rightway Agencies</h1>
                 </Link>
                 <div className="space-y-1">
-                    {routes.map((route) => (
+                    {routes.filter(route => {
+                        if (route.label === 'Accounting' && user?.role !== 'admin') return false
+                        if (route.label === 'Settings' && user?.role !== 'admin') return true
+                        return true
+                    }).map((route) => (
                         <Link
                             key={route.href}
                             href={route.href}
@@ -99,25 +99,34 @@ export function Sidebar({ mobile = false }: { mobile?: boolean }) {
                     ))}
                 </div>
             </div>
-            <div className="px-3">
+
+            <div className="px-3 mt-auto">
                 <div className="bg-slate-800 rounded-lg p-3 mb-4">
-                    <div className="flex items-center gap-x-2">
+                    <div className="flex items-center gap-x-2 mb-3">
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src="/avatar-placeholder.png" />
-                            <AvatarFallback className="bg-sky-500 text-white">AD</AvatarFallback>
+                            <AvatarImage src={user?.image || "/avatar-placeholder.png"} />
+                            <AvatarFallback className="bg-sky-500 text-white">
+                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold">Admin User</span>
-                            <span className="text-xs text-zinc-400">admin@agency.com</span>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-semibold truncate">{user?.name || 'User'}</span>
+                            <span className="text-xs text-zinc-400 truncate">{user?.email}</span>
                         </div>
                     </div>
+                    <form action={handleSignOut}>
+                        <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-400/10 h-8 px-2 text-xs">
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sign Out
+                        </Button>
+                    </form>
                 </div>
             </div>
         </div>
     )
 }
 
-export function MobileSidebar() {
+export function MobileSidebar({ user }: { user?: any }) {
     const [open, setOpen] = useState(false)
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -127,8 +136,9 @@ export function MobileSidebar() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 bg-slate-900 border-none text-white w-72">
-                <Sidebar mobile />
+                <Sidebar mobile user={user} />
             </SheetContent>
         </Sheet>
     )
 }
+

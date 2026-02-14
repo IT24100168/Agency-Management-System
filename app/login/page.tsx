@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default async function LoginPage(props: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -25,46 +25,61 @@ export default async function LoginPage(props: {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form className="space-y-4">
-                        {error && (
-                            <div className="p-3 bg-red-100 border border-red-200 text-red-600 rounded-md text-sm text-center font-medium">
-                                {error}
-                            </div>
-                        )}
-                        {message && (
-                            <div className="p-3 bg-green-100 border border-green-200 text-green-600 rounded-md text-sm text-center font-medium">
-                                {message}
-                            </div>
-                        )}
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="name@agency.com"
-                                required
-                                className="block w-full"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Button formAction={login} className="w-full bg-blue-600 hover:bg-blue-700">
-                                Sign In
-                            </Button>
-                            <Button formAction={signup} variant="outline" className="w-full">
+                    <Tabs defaultValue="admin" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-4">
+                            <TabsTrigger value="admin">Admin</TabsTrigger>
+                            <TabsTrigger value="staff">Staff</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="admin">
+                            <form className="space-y-4">
+                                <input type="hidden" name="role_hint" value="admin" />
+                                {error && (
+                                    <div className="p-3 bg-red-100 border border-red-200 text-red-600 rounded-md text-sm text-center font-medium">
+                                        {error}
+                                    </div>
+                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-admin">Email</Label>
+                                    <Input id="email-admin" name="email" type="email" placeholder="admin@agency.com" required className="block w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password-admin">Password</Label>
+                                    <Input id="password-admin" name="password" type="password" required />
+                                </div>
+                                <Button formAction={login} className="w-full bg-blue-600 hover:bg-blue-700">Sign In as Admin</Button>
+                                {/* Dev only button inside form for layout simplicity or separate? Keeping it simple. */}
+                            </form>
+                        </TabsContent>
+
+                        <TabsContent value="staff">
+                            <form className="space-y-4">
+                                <input type="hidden" name="role_hint" value="staff" />
+                                {error && (
+                                    <div className="p-3 bg-red-100 border border-red-200 text-red-600 rounded-md text-sm text-center font-medium">
+                                        {error}
+                                    </div>
+                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email-staff">Email</Label>
+                                    <Input id="email-staff" name="email" type="email" placeholder="staff@agency.com" required className="block w-full" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password-staff">Password</Label>
+                                    <Input id="password-staff" name="password" type="password" required />
+                                </div>
+                                <Button formAction={login} className="w-full bg-slate-600 hover:bg-slate-700">Sign In as Staff</Button>
+                            </form>
+                        </TabsContent>
+                    </Tabs>
+
+                    <div className="mt-4">
+                        <form>
+                            <Button formAction={signup} variant="outline" className="w-full text-xs h-8">
                                 Create Account (Dev Only)
                             </Button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-500">
                     <p>Protected by high-grade encryption.</p>

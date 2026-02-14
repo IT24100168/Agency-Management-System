@@ -1,13 +1,11 @@
 
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 import { agentFormSchema } from './schema'
 
 export async function createAgent(formData: FormData) {
-    const supabase = await createClient()
-
     const rawData = {
         name: formData.get('name'),
         type: formData.get('type'),
@@ -25,30 +23,28 @@ export async function createAgent(formData: FormData) {
         }
     }
 
-    const { data } = validatedFields
-    const contact_info = {
-        email: data.email || null,
-        phone: data.phone,
-        address: data.address || null
-    }
+    const { name, type, email, phone, address } = validatedFields.data
 
-    const { error } = await supabase
-        .from('agents')
-        .insert([
-            {
-                name: data.name,
-                type: data.type,
-                contact_info: contact_info
-            },
-        ])
-        .select()
-
-    if (error) {
+    try {
+        await prisma.agent.create({
+            data: {
+                name,
+                type,
+                contactInfo: {
+                    email,
+                    phone,
+                    address
+                }
+            }
+        })
+    } catch (error) {
+        console.error("Prisma Create Error:", error)
         return {
             message: 'Database Error: Failed to Create Agent.',
-            error: error.message
+            error: String(error)
         }
     }
 
-    redirect('/dashboard/agents')
+    revalidatePath('/dashboard/agents')
+    return { success: true, redirect: '/dashboard/agents' }
 }

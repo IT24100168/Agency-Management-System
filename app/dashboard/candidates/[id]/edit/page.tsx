@@ -3,7 +3,10 @@ import { getCandidate } from "../actions"
 import EditCandidateForm from "./edit-form"
 import { notFound } from "next/navigation"
 
-export default async function EditCandidatePage({ params }: { params: { id: string } }) {
+type Params = Promise<{ id: string }>
+
+export default async function EditCandidatePage(props: { params: Params }) {
+    const params = await props.params;
     const candidate = await getCandidate(params.id)
 
     if (!candidate) {

@@ -1,54 +1,79 @@
 
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { signIn } from '@/auth'
+import { prisma } from '@/lib/prisma'
+import { saltAndHashPassword } from '@/lib/password'
+import { AuthError } from 'next-auth'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+import { z } from 'zod'
+
+const signupSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+})
 
 export async function login(formData: FormData) {
-    const supabase = await createClient()
-
-    const data = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-    }
-
-    const { error } = await supabase.auth.signInWithPassword(data)
-
-    if (error) {
-        redirect('/login?error=Invalid%20credentials')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
-}
-
-export async function signup(formData: FormData) {
-    const supabase = await createClient()
-
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
-                full_name: 'Dev User', // Default metadata for the trigger to work
+    try {
+        await signIn('credentials', {
+            email,
+            password,
+        })
+    } catch (error) {
+        if (error instanceof AuthError) {
+            switch (error.type) {
+                case 'CredentialsSignin':
+                    redirect('/login?error=Invalid credentials')
+                default:
+                    redirect('/login?error=Something went wrong')
             }
         }
+        throw error
+    }
+}
+
+export async function signup(formData: FormData) {
+    const rawData = {
+        email: formData.get('email'),
+        password: formData.get('password'),
+    }
+
+    const validatedFields = signupSchema.safeParse(rawData)
+
+    if (!validatedFields.success) {
+        const errorMessage = validatedFields.error.flatten().fieldErrors.password?.[0] || "Invalid input"
+        redirect(`/login?error=${encodeURIComponent(errorMessage)}`)
+    }
+
+    const { email, password } = validatedFields.data
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+        where: { email }
     })
 
-    if (error) {
+    if (existingUser) {
+        redirect('/login?error=User already exists')
+    }
+
+    const hashedPassword = await saltAndHashPassword(password)
+
+    try {
+        await prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                fullName: 'Dev User',
+                role: 'staff' // Default role
+            }
+        })
+    } catch (error) {
         console.error('Signup Error:', error)
-        redirect(`/login?error=${encodeURIComponent(error.message)}`)
+        redirect('/login?error=Database error')
     }
 
-    if (!data.session) {
-        console.log('Signup successful but no session. Email confirmation might be required.')
-        redirect('/login?message=Check email for confirmation')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
+    redirect('/login?message=Account created! Please sign in.')
 }

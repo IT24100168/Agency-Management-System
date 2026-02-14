@@ -13,10 +13,32 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Candidate } from "@/types/candidate"
 import Link from "next/link"
 
 export const columns: ColumnDef<Candidate>[] = [
+    {
+        accessorKey: "photo",
+        header: "",
+        cell: ({ row }) => {
+            const photo = row.getValue("photo") as string | undefined
+            const name = row.getValue("full_name") as string
+            const initials = name ? name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'C'
+
+            return (
+                <Avatar>
+                    <AvatarImage src={photo} alt={name} className="object-cover" />
+                    <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+            )
+        },
+    },
+    {
+        accessorKey: "registration_number",
+        header: "Reg No",
+        cell: ({ row }) => <div className="font-mono text-xs">{row.getValue("registration_number") || "-"}</div>,
+    },
     {
         accessorKey: "passport_no",
         header: "Passport No",
@@ -60,6 +82,21 @@ export const columns: ColumnDef<Candidate>[] = [
     {
         accessorKey: "contact_number",
         header: "Contact",
+    },
+    {
+        id: "payment_status",
+        header: () => <div className="text-center">Initial Payment</div>,
+        cell: ({ row }) => {
+            const hasPayment = row.original.has_initial_payment
+            return (
+                <div className="flex justify-center items-center">
+                    <div
+                        className={`h-3 w-3 rounded-full ${hasPayment ? 'bg-green-500' : 'bg-red-500'}`}
+                        title={hasPayment ? "Initial Payment Made" : "No Payment"}
+                    />
+                </div>
+            )
+        }
     },
     {
         id: "actions",

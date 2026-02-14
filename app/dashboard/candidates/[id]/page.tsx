@@ -2,6 +2,7 @@
 import { getCandidate } from "./actions"
 import { getTransactions } from "./finance-actions"
 import { getDocuments } from "./document-actions"
+import { getAgents } from "../../agents/actions"
 import { notFound } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CandidateInfo } from "./candidate-info"
@@ -9,7 +10,7 @@ import { ProcessingStatus } from "./processing-status"
 import { FinanceLedger } from "./finance-ledger"
 import { DocumentsList } from "./documents-list"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Printer } from "lucide-react"
 import Link from "next/link"
 
 // Type fix for Next.js 15 params
@@ -20,6 +21,7 @@ export default async function CandidateDetailPage(props: { params: Params }) {
     const candidate = await getCandidate(params.id)
     const transactions = await getTransactions(params.id)
     const documents = await getDocuments(params.id)
+    const agents = await getAgents()
 
     if (!candidate) {
         notFound()
@@ -37,7 +39,12 @@ export default async function CandidateDetailPage(props: { params: Params }) {
                     <h2 className="text-3xl font-bold tracking-tight">{candidate.full_name}</h2>
                 </div>
                 <div className="flex items-center space-x-2">
-                    {/* Actions like Edit or Print */}
+                    <Link href={`/dashboard/candidates/${candidate.id}/print`} target="_blank">
+                        <Button variant="outline">
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print
+                        </Button>
+                    </Link>
                 </div>
             </div>
 
@@ -50,11 +57,15 @@ export default async function CandidateDetailPage(props: { params: Params }) {
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-4">
-                    <CandidateInfo candidate={candidate} />
+                    <CandidateInfo candidate={candidate} agents={agents} />
                 </TabsContent>
 
                 <TabsContent value="processing" className="space-y-4">
-                    <ProcessingStatus status={candidate.status} />
+                    <ProcessingStatus
+                        candidateId={candidate.id}
+                        status={candidate.status}
+                        steps={candidate.processing_steps || []}
+                    />
                 </TabsContent>
 
                 <TabsContent value="finance">

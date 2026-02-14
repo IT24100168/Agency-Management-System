@@ -14,6 +14,8 @@ import {
     TableRow,
 } from "@/components/ui/data-table-components"
 
+import { AgentActions } from './agent-actions'
+
 async function AgentsTable() {
     const agents = await getAgents()
 
@@ -26,19 +28,24 @@ async function AgentsTable() {
                         <TableHead>Type</TableHead>
                         <TableHead>Contact Info</TableHead>
                         <TableHead>Created At</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {agents.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={4} className="h-24 text-center">
+                            <TableCell colSpan={5} className="h-24 text-center">
                                 No agents found.
                             </TableCell>
                         </TableRow>
                     ) : (
                         agents.map((agent) => (
                             <TableRow key={agent.id}>
-                                <TableCell className="font-medium">{agent.name}</TableCell>
+                                <TableCell className="font-medium">
+                                    <Link href={`/dashboard/agents/${agent.id}`} className="hover:underline">
+                                        {agent.name}
+                                    </Link>
+                                </TableCell>
                                 <TableCell className="capitalize">{agent.type}</TableCell>
                                 <TableCell>
                                     {agent.contact_info ? (
@@ -49,6 +56,9 @@ async function AgentsTable() {
                                     ) : '-'}
                                 </TableCell>
                                 <TableCell>{new Date(agent.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                    <AgentActions agent={agent as any} />
+                                </TableCell>
                             </TableRow>
                         ))
                     )}

@@ -19,6 +19,7 @@ model User {
   // Relations
   agentProfile      Agent?
   accountingEntries Accounting[]
+  reminders         Reminder[]
 
   @@map("users")
 }
@@ -42,14 +43,60 @@ model Agent {
 
 model Candidate {
   id            String   @id @default(uuid())
-  passportNo    String   @unique @map("passport_no")
+  
+  // 1. General Details
+  registrationNumber String? @unique @map("registration_number") // Auto-generate or manual? User said "Registration Number", implies manual or system gen. Let's make it optional string for now.
+  registrationDate DateTime? @map("registration_date") @default(now())
   fullName      String   @map("full_name")
-  agentId       String?  @map("agent_id")
-  status        String   @default("Registered") // Registered, Medical, Visa, etc.
+  nameWithInitials String? @map("name_with_initials")
+  nic           String?  @unique
   dob           DateTime?
-  gender        String?
-  contactNumber String?  @map("contact_number")
-  address       String?
+  gender        String?  // SEX
+  age           Int?     // Calculated or stored? User asked for field. Storing it.
+  photo         String?  // URL to photo
+
+  // 2. Personal Details
+  homeTown      String?  @map("home_town")
+  placeOfBirth  String?  @map("place_of_birth")
+  gsSection     String?  @map("gs_section")
+  policeArea    String?  @map("police_area")
+  agaDivision   String?  @map("aga_division")
+  nationality   String?
+  religion      String?
+  maritalStatus String?  @map("marital_status")
+  contactNumber String?  @map("contact_number") // Mobile/Phone
+  secondaryContactNumber String? @map("secondary_contact_number")
+  address       String?  // Guardian Address or user address? User listed "Guardian Address" separately. This might be candidate's address.
+  weight        Decimal? @db.Decimal(5, 2)
+  height        Decimal? @db.Decimal(5, 2) // cm or feet? Storing as decimal.
+  childrenCount Int?     @map("children_count")
+  
+  // Guardian
+  guardianName  String?  @map("guardian_name")
+  guardianAddress String? @map("guardian_address")
+  guardianRelationship String? @map("guardian_relationship")
+  guardianContact String? @map("guardian_contact")
+
+  // 3. Passport Details
+  passportNo    String   @unique @map("passport_no")
+  passportIssuedDate DateTime? @map("passport_issued_date")
+  passportExpDate   DateTime? @map("passport_exp_date")
+  passportPlaceIssued String? @map("passport_place_issued")
+  passportStatus      String? @map("passport_status") // 'In Custody', 'No'
+
+  // 4. Job Details
+  jobCountry    String?  @map("job_country")
+  jobPost       String?  @map("job_post")
+  jobSalary     Decimal? @db.Decimal(10, 2) @map("job_salary")
+  contractPeriod String? @map("contract_period")
+  experience    String?  @db.Text
+
+  // 5. Education & Remarks
+  remarks       String?  @db.Text
+
+  // System
+  agentId       String?  @map("agent_id")
+  status        String   @default("Registered")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -101,4 +148,16 @@ model Document {
   candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
   @@map("documents")
+}
+
+model Reminder {
+  id        String   @id @default(uuid())
+  title     String
+  dueDate   DateTime @map("due_date")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reminders")
 }
