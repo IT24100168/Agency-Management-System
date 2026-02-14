@@ -30,7 +30,7 @@ export function OverviewChart({ data = [] }: OverviewChartProps) {
                 <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [`Rs. ${value?.toLocaleString() ?? 0}`, 'Income']}
+                    formatter={(value: any) => [`Rs. ${value?.toLocaleString() ?? 0}`, 'Income']}
                 />
                 <Bar dataKey="total" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
             </BarChart>
