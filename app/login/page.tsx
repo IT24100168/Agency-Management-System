@@ -75,8 +75,10 @@ export default async function LoginPage(props: {
 
                     <div className="mt-4">
                         <form>
+                            <input type="hidden" name="email" value="test_admin@agency.com" />
+                            <input type="hidden" name="password" value="password123" />
                             <Button formAction={signup} variant="outline" className="w-full text-xs h-8">
-                                Create Account (Dev Only)
+                                Create Test Account (Dev Only)
                             </Button>
                         </form>
                     </div>
