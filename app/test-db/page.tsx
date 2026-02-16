@@ -23,6 +23,16 @@ export default async function TestDBPage() {
             <h1>Database Connection Test</h1>
             <p><strong>Status:</strong> {message}</p>
             {userCount >= 0 && <p><strong>User Count:</strong> {userCount}</p>}
+
+            <div style={{ marginTop: '20px', background: '#f5f5f5', padding: '15px' }}>
+                <h3>Environment Diagnostics</h3>
+                <p><strong>NODE_ENV:</strong> {process.env.NODE_ENV}</p>
+                <p><strong>Available Env Keys:</strong></p>
+                <pre style={{ fontSize: '12px', overflow: 'auto', maxHeight: '200px' }}>
+                    {JSON.stringify(Object.keys(process.env).sort(), null, 2)}
+                </pre>
+            </div>
+
             {error && (
                 <div style={{ background: '#fee', color: '#c00', padding: '10px', marginTop: '20px', whiteSpace: 'pre-wrap' }}>
                     <strong>Error Details:</strong><br />

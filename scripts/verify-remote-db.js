@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 
-// I have verified these credentials work!
+// The exact URL the user provided
 const connectionString = "mysql://u251120027_agency_admin:Hh@5454-@153.92.15.39:3306/u251120027_agency_system";
 
 const prisma = new PrismaClient({
@@ -13,17 +13,17 @@ const prisma = new PrismaClient({
 
 async function main() {
     console.log('Testing connection to Hostinger Database...');
+    console.log(`URL: ${connectionString.replace(/:[^:@]*@/, ':****@')}`);
 
     try {
         await prisma.$connect();
-        console.log('\n✅ SUCCESS! The password and settings are CORRECT.');
-        console.log('We connected successfully from your computer.');
+        console.log('\nSUCCESS! Connection established.');
 
         const userCount = await prisma.user.count();
-        console.log(`User count in database: ${userCount}`);
+        console.log(`Database is accessible. User count: ${userCount}`);
 
     } catch (e) {
-        console.error('\n❌ CONNECTION FAILED:', e.message);
+        console.error('\nCONNECTION FAILED:', e.message);
     } finally {
         await prisma.$disconnect();
     }
