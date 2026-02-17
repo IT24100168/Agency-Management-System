@@ -1,7 +1,7 @@
-
-'use server'
-import { signOut } from "@/auth"
+import { deleteSession } from '@/lib/session'
+import { redirect } from 'next/navigation'
 
 export async function handleSignOut() {
-    await signOut()
+    await deleteSession()
+    redirect('/login')
 }

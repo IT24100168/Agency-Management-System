@@ -1,10 +1,8 @@
 
 'use server'
 
-import { signIn } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { saltAndHashPassword } from '@/lib/password'
-import { AuthError } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
@@ -13,27 +11,41 @@ const signupSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
 })
 
+import { createSession } from '@/lib/session'
+import bcrypt from 'bcryptjs'
+
 export async function login(formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
     try {
-        await signIn('credentials', {
-            email,
-            password,
-            redirectTo: '/dashboard',
+        const user = await prisma.user.findUnique({
+            where: { email },
         })
-    } catch (error) {
-        if (error instanceof AuthError) {
-            switch (error.type) {
-                case 'CredentialsSignin':
-                    redirect('/login?error=Invalid credentials')
-                default:
-                    redirect('/login?error=Something went wrong')
-            }
+
+        if (!user || !user.password) {
+            redirect('/login?error=Invalid credentials')
         }
-        throw error
+
+        const passwordsMatch = await bcrypt.compare(password, user.password)
+
+        if (!passwordsMatch) {
+            redirect('/login?error=Invalid credentials')
+        }
+
+        await createSession(user.id, user.role)
+    } catch (error) {
+        // Redirect throws an error, so we need to rethrow it if it's a redirect
+        if (isRedirectError(error)) throw error
+        console.error('Login error:', error)
+        redirect('/login?error=Something went wrong')
     }
+
+    redirect('/dashboard')
+}
+
+function isRedirectError(error: any) {
+    return error && typeof error === 'object' && (error.digest?.startsWith('NEXT_REDIRECT') || error.message === 'NEXT_REDIRECT')
 }
 
 export async function signup(formData: FormData) {
