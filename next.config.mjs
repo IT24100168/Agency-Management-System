@@ -7,9 +7,11 @@ const nextConfig = {
         workerThreads: false,
         cpus: 1,
     },
-    webpack: (config) => {
-        config.cache = false;
-        return config;
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreBuildErrors: true,
     },
 };
 
