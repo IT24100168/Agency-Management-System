@@ -21,6 +21,7 @@ export async function login(formData: FormData) {
         await signIn('credentials', {
             email,
             password,
+            redirectTo: '/dashboard',
         })
     } catch (error) {
         if (error instanceof AuthError) {
