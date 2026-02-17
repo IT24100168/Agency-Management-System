@@ -39,7 +39,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
 
     try {
         const user = await prisma.user.findUnique({
-            where: { email: session.user.email }
+            where: { id: session.userId }
         })
 
         if (!user) return { error: "User not found", success: "" }
@@ -50,7 +50,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
         const hashedPassword = await bcrypt.hash(newPassword, 10)
 
         await prisma.user.update({
-            where: { email: session.user.email },
+            where: { id: session.userId },
             data: { password: hashedPassword }
         })
 

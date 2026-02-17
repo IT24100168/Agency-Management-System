@@ -8,12 +8,12 @@ import { AddTransactionDialog } from './add-dialog'
 
 export const dynamic = 'force-dynamic'
 
-import { auth } from '@/auth'
+import { verifySession } from '@/lib/session'
 import { redirect } from 'next/navigation'
 
 export default async function AccountingPage() {
-    const session = await auth()
-    if (session?.user?.role !== 'admin') {
+    const session = await verifySession()
+    if (session?.role !== 'admin') {
         redirect('/dashboard')
     }
 

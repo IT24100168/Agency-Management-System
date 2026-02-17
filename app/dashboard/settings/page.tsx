@@ -1,5 +1,5 @@
 
-import { auth } from '@/auth'
+import { verifySession } from '@/lib/session'
 import { redirect } from 'next/navigation'
 import { getUsers } from './actions'
 import { ProfileForm } from './profile-form'
@@ -9,10 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
-    const session = await auth()
-    if (!session?.user) redirect('/login')
+    const session = await verifySession()
+    if (!session?.isAuth) redirect('/login')
 
-    const user = session.user as any
+    const user = { role: session.role } // Minimal user object for check
+    const isAdmin = session.role === 'admin'
     const isAdmin = user.role === 'admin'
     const users = isAdmin ? await getUsers() : []
 
