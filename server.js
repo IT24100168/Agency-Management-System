@@ -1,5 +1,7 @@
 // Force single-threaded mode for Hostinger shared hosting
 process.env.UV_THREADPOOL_SIZE = 1;
+// Disable Node.js worker threads where possible (though Next.js might still try)
+process.env.NEXT_IS_EXPORT_WORKER = 'true'; // Hack to trick Next.js? No, risky.
 
 const { createServer } = require('http')
 const { parse } = require('url')
