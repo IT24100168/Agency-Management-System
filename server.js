@@ -1,17 +1,13 @@
-// Limit threads to 3 (Safe margin for Prisma + Bcrypt)
-process.env.UV_THREADPOOL_SIZE = 3;
-// Disable Node.js worker threads where possible (though Next.js might still try)
-process.env.NEXT_IS_EXPORT_WORKER = 'true'; // Hack to trick Next.js? No, risky.
-
-const { createServer } = require('http')
-const { parse } = require('url')
-const next = require('next')
-
 const { loadEnvConfig } = require('@next/env')
 
 // Load environment variables from .env files
 const dev = process.env.NODE_ENV !== 'production'
 loadEnvConfig(process.cwd(), dev, { info: (msg) => console.log(msg) })
+
+// Limit threads to 3 (Safe margin for Prisma + Bcrypt)
+process.env.UV_THREADPOOL_SIZE = 3;
+// Disable Node.js worker threads where possible (though Next.js might still try)
+process.env.NEXT_IS_EXPORT_WORKER = 'true'; // Hack to trick Next.js? No, risky.
 
 const { createServer } = require('http')
 const { parse } = require('url')
