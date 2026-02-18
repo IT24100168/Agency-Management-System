@@ -37,9 +37,8 @@ export async function login(formData: FormData) {
     } catch (error) {
         // Redirect throws an error, so we need to rethrow it if it's a redirect
         if (isRedirectError(error)) throw error
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error('Login error FULL DETAILS:', error)
-        redirect(`/login?error=${encodeURIComponent(errorMessage)}`)
+        console.error('Login error:', error)
+        redirect('/login?error=Something went wrong')
     }
 
     redirect('/dashboard')

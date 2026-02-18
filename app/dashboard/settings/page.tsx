@@ -1,5 +1,5 @@
+
 import { verifySession } from '@/lib/session'
-import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { getUsers } from './actions'
 import { ProfileForm } from './profile-form'
@@ -10,15 +10,9 @@ export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
     const session = await verifySession()
-    if (!session?.isAuth || !session.userId) redirect('/login')
+    if (!session?.isAuth) redirect('/login')
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.userId }
-    })
-
-    if (!user) redirect('/login')
-
-    const isAdmin = user.role === 'admin'
+    const isAdmin = session.role === 'admin'
     const users = isAdmin ? await getUsers() : []
 
     return (
@@ -33,7 +27,7 @@ export default async function SettingsPage() {
                     {isAdmin && <TabsTrigger value="users">Team Members</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="profile" className="space-y-4">
-                    <ProfileForm user={user} />
+                    <ProfileForm user={session.user} />
                 </TabsContent>
                 {isAdmin && (
                     <TabsContent value="users" className="space-y-4">

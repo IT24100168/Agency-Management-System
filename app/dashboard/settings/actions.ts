@@ -1,7 +1,7 @@
 
 'use server'
 
-import { verifySession } from '@/lib/session'
+import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'
@@ -24,8 +24,8 @@ const userSchema = z.object({
 })
 
 export async function updatePassword(prevState: any, formData: FormData) {
-    const session = await auth()
-    if (!session?.user?.email) return { error: "Not authenticated", success: "" }
+    const session = await verifySession()
+    if (!session?.isAuth || !session.userId) return { error: "Not authenticated", success: "" }
 
     const currentPassword = formData.get('currentPassword') as string
     const newPassword = formData.get('newPassword') as string
@@ -62,9 +62,8 @@ export async function updatePassword(prevState: any, formData: FormData) {
 }
 
 export async function createUser(prevState: any, formData: FormData) {
-    const session = await auth()
-    const user = session?.user as any
-    if (user?.role !== 'admin') return { error: "Unauthorized", success: "" }
+    const session = await verifySession()
+    if (session?.role !== 'admin') return { error: "Unauthorized", success: "" }
 
     const fullName = formData.get('fullName') as string
     const email = formData.get('email') as string
