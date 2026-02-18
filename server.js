@@ -7,6 +7,16 @@ const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
 
+const { loadEnvConfig } = require('@next/env')
+
+// Load environment variables from .env files
+const dev = process.env.NODE_ENV !== 'production'
+loadEnvConfig(process.cwd(), dev, { info: (msg) => console.log(msg) })
+
+const { createServer } = require('http')
+const { parse } = require('url')
+const next = require('next')
+
 // Try to limit sharp concurrency if present
 try {
     const sharp = require('sharp');
@@ -16,7 +26,6 @@ try {
     // Sharp not installed or failed to configure, ignore
 }
 
-const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
 const port = process.env.PORT || 3000
 // when using middleware `hostname` and `port` must be provided below
