@@ -1,6 +1,18 @@
+// Force single-threaded mode for Hostinger shared hosting
+process.env.UV_THREADPOOL_SIZE = 1;
+
 const { createServer } = require('http')
 const { parse } = require('url')
 const next = require('next')
+
+// Try to limit sharp concurrency if present
+try {
+    const sharp = require('sharp');
+    sharp.concurrency(1);
+    sharp.cache(false);
+} catch (e) {
+    // Sharp not installed or failed to configure, ignore
+}
 
 const dev = process.env.NODE_ENV !== 'production'
 const hostname = 'localhost'
