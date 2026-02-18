@@ -1,16 +1,34 @@
-
 import { verifySession } from '@/lib/session'
 import { redirect } from 'next/navigation'
 import { getUsers } from './actions'
 import { ProfileForm } from './profile-form'
 import { UsersList } from './users-list'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SettingsPage() {
     const session = await verifySession()
-    if (!session?.isAuth) redirect('/login')
+    if (!session?.isAuth || !session.userId) redirect('/login')
+
+    const user = await prisma.user.findUnique({
+        where: { id: session.userId },
+        select: {
+            fullName: true,
+            email: true,
+            role: true
+        }
+    })
+
+    if (!user) redirect('/login')
+
+    // Map Prisma user to ProfileForm expected shape
+    const profileUser = {
+        name: user.fullName,
+        email: user.email,
+        role: user.role
+    }
 
     const isAdmin = session.role === 'admin'
     const users = isAdmin ? await getUsers() : []
@@ -27,7 +45,7 @@ export default async function SettingsPage() {
                     {isAdmin && <TabsTrigger value="users">Team Members</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="profile" className="space-y-4">
-                    <ProfileForm user={session.user} />
+                    <ProfileForm user={profileUser} />
                 </TabsContent>
                 {isAdmin && (
                     <TabsContent value="users" className="space-y-4">
