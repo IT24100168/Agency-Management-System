@@ -1,7 +1,7 @@
 
 'use server'
 
-import { auth } from '@/auth'
+import { verifySession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -12,8 +12,8 @@ const reminderSchema = z.object({
 })
 
 export async function addReminder(prevState: any, formData: FormData) {
-    const session = await auth()
-    if (!session?.user?.id) return { error: "Not authenticated" }
+    const session = await verifySession()
+    if (!session?.userId) return { error: "Not authenticated" }
 
     const title = formData.get('title') as string
     const dueDate = formData.get('dueDate') as string
@@ -29,7 +29,7 @@ export async function addReminder(prevState: any, formData: FormData) {
             data: {
                 title,
                 dueDate: new Date(dueDate),
-                userId: session.user.id
+                userId: session.userId
             }
         })
         revalidatePath('/dashboard')
@@ -41,12 +41,12 @@ export async function addReminder(prevState: any, formData: FormData) {
 }
 
 export async function getReminders() {
-    const session = await auth()
-    if (!session?.user?.id) return []
+    const session = await verifySession()
+    if (!session?.userId) return []
 
     try {
         const reminders = await prisma.reminder.findMany({
-            where: { userId: session.user.id },
+            where: { userId: session.userId },
             orderBy: { dueDate: 'asc' }
         })
         return reminders
@@ -57,8 +57,8 @@ export async function getReminders() {
 }
 
 export async function deleteReminder(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) return { error: "Not authenticated" }
+    const session = await verifySession()
+    if (!session?.userId) return { error: "Not authenticated" }
 
     try {
         // Ensure user owns the reminder

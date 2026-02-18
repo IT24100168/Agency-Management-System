@@ -1,7 +1,7 @@
 
 'use server'
 
-import { auth } from '@/auth'
+import { verifySession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import bcrypt from 'bcryptjs'

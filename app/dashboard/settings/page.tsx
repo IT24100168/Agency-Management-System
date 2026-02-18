@@ -14,7 +14,6 @@ export default async function SettingsPage() {
 
     const user = { role: session.role } // Minimal user object for check
     const isAdmin = session.role === 'admin'
-    const isAdmin = user.role === 'admin'
     const users = isAdmin ? await getUsers() : []
 
     return (
@@ -29,7 +28,7 @@ export default async function SettingsPage() {
                     {isAdmin && <TabsTrigger value="users">Team Members</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="profile" className="space-y-4">
-                    <ProfileForm user={session.user} />
+                    <ProfileForm user={session} />
                 </TabsContent>
                 {isAdmin && (
                     <TabsContent value="users" className="space-y-4">
