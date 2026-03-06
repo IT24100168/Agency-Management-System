@@ -1,5 +1,5 @@
 
-import { login, signup } from './actions'
+import { login } from './actions'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -72,16 +72,6 @@ export default async function LoginPage(props: {
                             </form>
                         </TabsContent>
                     </Tabs>
-
-                    <div className="mt-4">
-                        <form>
-                            <input type="hidden" name="email" value="test_admin@agency.com" />
-                            <input type="hidden" name="password" value="password123" />
-                            <Button formAction={signup} variant="outline" className="w-full text-xs h-8">
-                                Create Test Account (Dev Only)
-                            </Button>
-                        </form>
-                    </div>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-2 text-center text-sm text-gray-500">
                     <p>Protected by high-grade encryption.</p>

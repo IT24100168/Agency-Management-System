@@ -43,13 +43,29 @@ export async function getDashboardStats() {
     // 5. Income History (Last 6 months)
     const incomeHistory = await getIncomeHistory()
 
+    // 6. Candidates this month
+    const candidatesThisMonth = await prisma.candidate.count({
+        where: {
+            createdAt: { gte: firstDay }
+        }
+    })
+
+    // 7. Candidates in Processing
+    const candidatesInProcessing = await prisma.candidate.count({
+        where: {
+            status: 'Processing'
+        }
+    })
+
     return {
         totalCandidates,
         monthlyIncome,
         monthlyExpenses,
         totalAgents,
         countryStats: await getCountryStats(),
-        incomeHistory
+        incomeHistory,
+        candidatesThisMonth,
+        candidatesInProcessing
     }
 }
 

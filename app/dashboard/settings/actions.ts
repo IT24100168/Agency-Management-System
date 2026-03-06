@@ -4,6 +4,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { verifySession } from '@/lib/session'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
@@ -39,7 +40,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
 
     try {
         const user = await prisma.user.findUnique({
-            where: { id: session.userId }
+            where: { id: session.userId as string }
         })
 
         if (!user) return { error: "User not found", success: "" }
@@ -50,7 +51,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
         const hashedPassword = await bcrypt.hash(newPassword, 10)
 
         await prisma.user.update({
-            where: { id: session.userId },
+            where: { id: session.userId as string },
             data: { password: hashedPassword }
         })
 
@@ -100,9 +101,8 @@ export async function createUser(prevState: any, formData: FormData) {
 }
 
 export async function getUsers() {
-    const session = await auth()
-    const user = session?.user as any
-    if (user?.role !== 'admin') return []
+    const session = await verifySession()
+    if (session?.role !== 'admin') return []
 
     return await prisma.user.findMany({
         orderBy: { createdAt: 'desc' },

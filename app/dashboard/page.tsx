@@ -8,7 +8,14 @@ import { ReminderList } from "@/components/dashboard/reminders/reminder-list"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+import { verifySession } from '@/lib/session'
+import { redirect } from 'next/navigation'
+
 export default async function DashboardPage() {
+    const session = await verifySession()
+    if (!session?.isAuth) redirect('/login')
+    const isStaff = session.role === 'staff'
+
     const stats = await getDashboardStats()
     const recentActivity = await getRecentActivity()
     const reminders = await getReminders()
@@ -47,34 +54,69 @@ export default async function DashboardPage() {
                         </p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Monthly Income
-                        </CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">Rs. {stats.monthlyIncome.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            This month
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Monthly Expenses
-                        </CardTitle>
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">Rs. {stats.monthlyExpenses.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">
-                            This month
-                        </p>
-                    </CardContent>
-                </Card>
+                {!isStaff ? (
+                    <>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Monthly Income
+                                </CardTitle>
+                                <Wallet className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">Rs. {stats.monthlyIncome.toLocaleString()}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    This month
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Monthly Expenses
+                                </CardTitle>
+                                <Wallet className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">Rs. {stats.monthlyExpenses.toLocaleString()}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    This month
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </>
+                ) : (
+                    <>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    Candidates This Month
+                                </CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.candidatesThisMonth}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    Registered this month
+                                </p>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">
+                                    In Processing
+                                </CardTitle>
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{stats.candidatesInProcessing}</div>
+                                <p className="text-xs text-muted-foreground">
+                                    Currently processing
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </>
+                )}
             </div>
 
             <div>
@@ -107,16 +149,18 @@ export default async function DashboardPage() {
                 </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
-                    <CardHeader>
-                        <CardTitle>Income Overview</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pl-2">
-                        <OverviewChart data={stats.incomeHistory} />
-                    </CardContent>
-                </Card>
-                <div className="col-span-3 space-y-4">
+            <div className={`grid gap-4 md:grid-cols-2 ${!isStaff ? 'lg:grid-cols-7' : 'lg:grid-cols-1'}`}>
+                {!isStaff && (
+                    <Card className="col-span-4">
+                        <CardHeader>
+                            <CardTitle>Income Overview</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pl-2">
+                            <OverviewChart data={stats.incomeHistory} />
+                        </CardContent>
+                    </Card>
+                )}
+                <div className={!isStaff ? "col-span-3 space-y-4" : "space-y-4"}>
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Actions</CardTitle>
