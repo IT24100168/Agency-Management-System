@@ -49,7 +49,7 @@ export default async function SettingsPage() {
                 </TabsContent>
                 {isAdmin && (
                     <TabsContent value="users" className="space-y-4">
-                        <UsersList users={users} />
+                        <UsersList users={users} currentUserId={session.userId} />
                     </TabsContent>
                 )}
             </Tabs>

@@ -12,6 +12,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { CreateUserDialog } from "./create-user-dialog"
+import { Button } from "@/components/ui/button"
+import { Trash2 } from "lucide-react"
+import { deleteUser } from "./actions"
+import { useState } from "react"
 
 type User = {
     id: string
@@ -21,7 +25,25 @@ type User = {
     createdAt: Date
 }
 
-export function UsersList({ users }: { users: User[] }) {
+export function UsersList({ users, currentUserId }: { users: User[], currentUserId: string }) {
+    const [isDeleting, setIsDeleting] = useState<string | null>(null)
+
+    const handleDelete = async (userId: string) => {
+        if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
+            return
+        }
+
+        setIsDeleting(userId)
+        const result = await deleteUser(userId)
+
+        if (result.error) {
+            alert(result.error) // Changed from toast.error
+        } else {
+            alert(result.success) // Changed from toast.success
+        }
+        setIsDeleting(null)
+    }
+
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -39,6 +61,7 @@ export function UsersList({ users }: { users: User[] }) {
                             <TableHead>Email</TableHead>
                             <TableHead>Role</TableHead>
                             <TableHead>Joined</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -57,6 +80,19 @@ export function UsersList({ users }: { users: User[] }) {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                                    <TableCell className="text-right">
+                                        {user.id !== currentUserId && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDelete(user.id)}
+                                                disabled={isDeleting === user.id}
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))
                         )}

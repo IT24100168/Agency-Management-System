@@ -115,3 +115,23 @@ export async function getUsers() {
         }
     })
 }
+
+export async function deleteUser(userId: string) {
+    const session = await verifySession()
+    if (session?.role !== 'admin') return { error: "Unauthorized", success: "" }
+
+    if (session.userId === userId) {
+        return { error: "You cannot delete your own account", success: "" }
+    }
+
+    try {
+        await prisma.user.delete({
+            where: { id: userId }
+        })
+        revalidatePath('/dashboard/settings')
+        return { success: "User deleted successfully", error: "" }
+    } catch (error) {
+        console.error("User deletion error:", error)
+        return { error: "Failed to delete user", success: "" }
+    }
+}
