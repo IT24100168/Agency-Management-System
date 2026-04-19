@@ -7,14 +7,23 @@ import { Candidate } from '@/types/candidate'
 
 export async function getCandidates() {
     try {
+        // Single query with accounting join — eliminates N+1 problem.
+        // Previously ran a separate prisma.accounting.findFirst() for EACH candidate.
         const candidates = await prisma.candidate.findMany({
             orderBy: {
                 createdAt: 'desc',
             },
+            include: {
+                accounting: {
+                    where: { type: 'income', amount: { gt: 0 } },
+                    take: 1,
+                    select: { id: true }
+                }
+            }
         })
 
         // Map Prisma result to Candidate type (frontend expects snake_case for now)
-        return await Promise.all(candidates.map(async c => ({
+        return candidates.map(c => ({
             id: c.id,
             registration_number: c.registrationNumber || undefined,
             passport_no: c.passportNo,
@@ -27,14 +36,8 @@ export async function getCandidates() {
             contact_number: c.contactNumber || undefined,
             address: c.address || undefined,
             created_at: c.createdAt.toISOString(),
-            has_initial_payment: await prisma.accounting.findFirst({
-                where: {
-                    candidateId: c.id,
-                    type: 'income',
-                    amount: { gt: 0 }
-                }
-            }).then(t => !!t)
-        })));
+            has_initial_payment: c.accounting.length > 0
+        }));
     } catch (error) {
         console.error('Error fetching candidates:', error)
         return []

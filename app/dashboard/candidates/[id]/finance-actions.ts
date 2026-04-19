@@ -3,6 +3,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { invalidateCache } from '@/lib/cache'
 
 export async function addTransaction(formData: FormData) {
     const candidate_id = formData.get('candidate_id') as string
@@ -60,6 +61,7 @@ export async function addTransaction(formData: FormData) {
         return { error: 'Failed to add transaction' }
     }
 
+    invalidateCache('dashboard')
     revalidatePath(`/dashboard/candidates/${candidate_id}`)
 }
 

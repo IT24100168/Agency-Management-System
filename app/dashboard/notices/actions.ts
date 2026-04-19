@@ -3,6 +3,7 @@
 import { verifySession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { cachedFetch } from '@/lib/cache'
 
 export async function sendNotice(message: string) {
     const session = await verifySession()
@@ -162,15 +163,17 @@ export async function getStaffUsers() {
     const session = await verifySession()
     if (!session?.userId || session.role !== 'admin') return []
 
-    try {
-        return await prisma.user.findMany({
-            where: { role: 'staff' },
-            select: { id: true, fullName: true, email: true }
-        })
-    } catch (error) {
-        console.error("Failed to get staff users:", error)
-        return []
-    }
+    return cachedFetch('staff:users', async () => {
+        try {
+            return await prisma.user.findMany({
+                where: { role: 'staff' },
+                select: { id: true, fullName: true, email: true }
+            })
+        } catch (error) {
+            console.error("Failed to get staff users:", error)
+            return []
+        }
+    }, 120) // Cache for 120 seconds — staff list rarely changes
 }
 
 // Fetch notice history for the current user

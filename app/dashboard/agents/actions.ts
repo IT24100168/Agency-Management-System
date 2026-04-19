@@ -4,27 +4,30 @@
 import { prisma } from '@/lib/prisma'
 import { Agent } from '@/types/agent'
 import { revalidatePath } from 'next/cache'
+import { cachedFetch, invalidateCache } from '@/lib/cache'
 
 export async function getAgents(): Promise<Agent[]> {
-    try {
-        const agents = await prisma.agent.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-        })
+    return cachedFetch('agents:list', async () => {
+        try {
+            const agents = await prisma.agent.findMany({
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            })
 
-        return agents.map(a => ({
-            id: a.id,
-            name: a.name,
-            type: a.type as "sub-agent" | "foreign",
-            contact_info: a.contactInfo ? JSON.parse(JSON.stringify(a.contactInfo)) : undefined,
-            user_id: a.userId || undefined,
-            created_at: a.createdAt.toISOString()
-        }))
-    } catch (error) {
-        console.error('Error fetching agents:', error)
-        return []
-    }
+            return agents.map(a => ({
+                id: a.id,
+                name: a.name,
+                type: a.type as "sub-agent" | "foreign",
+                contact_info: a.contactInfo ? JSON.parse(JSON.stringify(a.contactInfo)) : undefined,
+                user_id: a.userId || undefined,
+                created_at: a.createdAt.toISOString()
+            }))
+        } catch (error) {
+            console.error('Error fetching agents:', error)
+            return []
+        }
+    }, 60) // Cache for 60 seconds
 }
 
 export async function getAgent(id: string): Promise<Agent | null> {
@@ -56,6 +59,8 @@ export async function deleteAgent(id: string) {
         await prisma.agent.delete({
             where: { id }
         })
+        invalidateCache('agents')
+        invalidateCache('dashboard')
         revalidatePath('/dashboard/agents')
         return { success: true }
     } catch (error) {

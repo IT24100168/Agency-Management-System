@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { agentFormSchema } from './schema'
+import { invalidateCache } from '@/lib/cache'
 
 export async function createAgent(formData: FormData) {
     const rawData = {
@@ -45,6 +46,8 @@ export async function createAgent(formData: FormData) {
         }
     }
 
+    invalidateCache('agents')
+    invalidateCache('dashboard')
     revalidatePath('/dashboard/agents')
     return { success: true, redirect: '/dashboard/agents' }
 }

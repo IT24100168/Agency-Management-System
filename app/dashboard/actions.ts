@@ -2,108 +2,92 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { cachedFetch, invalidateCache } from '@/lib/cache'
 
 export async function getDashboardStats() {
+    return cachedFetch('dashboard:stats', async () => {
+        const now = new Date()
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    // 1. Total Candidates
-    const totalCandidates = await prisma.candidate.count()
+        // Run ALL independent queries in parallel instead of sequentially
+        const [
+            totalCandidates,
+            incomeAgg,
+            expenseAgg,
+            totalAgents,
+            candidatesThisMonth,
+            candidatesInProcessing,
+            countryStats,
+            incomeHistory
+        ] = await Promise.all([
+            prisma.candidate.count(),
+            prisma.accounting.aggregate({
+                _sum: { amount: true },
+                where: { type: 'income', createdAt: { gte: firstDay } }
+            }),
+            prisma.accounting.aggregate({
+                _sum: { amount: true },
+                where: { type: 'expense', createdAt: { gte: firstDay } }
+            }),
+            prisma.agent.count(),
+            prisma.candidate.count({ where: { createdAt: { gte: firstDay } } }),
+            prisma.candidate.count({ where: { status: 'Processing' } }),
+            getCountryStats(),
+            getIncomeHistory()
+        ])
 
-    // 2. Monthly Income
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+        const monthlyIncome = incomeAgg._sum.amount ? incomeAgg._sum.amount.toNumber() : 0
+        const monthlyExpenses = expenseAgg._sum.amount ? expenseAgg._sum.amount.toNumber() : 0
 
-    const incomeAgg = await prisma.accounting.aggregate({
-        _sum: {
-            amount: true
-        },
-        where: {
-            type: 'income',
-            createdAt: { gte: firstDay }
+        return {
+            totalCandidates,
+            monthlyIncome,
+            monthlyExpenses,
+            totalAgents,
+            countryStats,
+            incomeHistory,
+            candidatesThisMonth,
+            candidatesInProcessing
         }
-    })
-
-    const monthlyIncome = incomeAgg._sum.amount ? incomeAgg._sum.amount.toNumber() : 0
-
-    // 3. Monthly Expenses
-    const expenseAgg = await prisma.accounting.aggregate({
-        _sum: {
-            amount: true
-        },
-        where: {
-            type: 'expense',
-            createdAt: { gte: firstDay }
-        }
-    })
-
-    const monthlyExpenses = expenseAgg._sum.amount ? expenseAgg._sum.amount.toNumber() : 0
-
-    // 4. Total Agents
-    const totalAgents = await prisma.agent.count()
-
-    // 5. Income History (Last 6 months)
-    const incomeHistory = await getIncomeHistory()
-
-    // 6. Candidates this month
-    const candidatesThisMonth = await prisma.candidate.count({
-        where: {
-            createdAt: { gte: firstDay }
-        }
-    })
-
-    // 7. Candidates in Processing
-    const candidatesInProcessing = await prisma.candidate.count({
-        where: {
-            status: 'Processing'
-        }
-    })
-
-    return {
-        totalCandidates,
-        monthlyIncome,
-        monthlyExpenses,
-        totalAgents,
-        countryStats: await getCountryStats(),
-        incomeHistory,
-        candidatesThisMonth,
-        candidatesInProcessing
-    }
+    }, 30) // Cache for 30 seconds
 }
 
 async function getIncomeHistory() {
-    // Get last 6 months
+    // Build month boundaries
     const months = []
     for (let i = 5; i >= 0; i--) {
         const d = new Date()
         d.setMonth(d.getMonth() - i)
-        d.setDate(1) // First day of the month
+        d.setDate(1)
         d.setHours(0, 0, 0, 0)
         months.push(d)
     }
 
-    const history = []
+    const sixMonthsAgo = months[0]
 
-    for (const date of months) {
+    // SINGLE query instead of 6 separate aggregate queries
+    const allIncome = await prisma.accounting.findMany({
+        where: {
+            type: 'income',
+            createdAt: { gte: sixMonthsAgo }
+        },
+        select: { amount: true, createdAt: true }
+    })
+
+    // Group by month in-memory
+    return months.map(date => {
         const nextMonth = new Date(date)
         nextMonth.setMonth(nextMonth.getMonth() + 1)
 
-        const agg = await prisma.accounting.aggregate({
-            _sum: { amount: true },
-            where: {
-                type: 'income',
-                createdAt: {
-                    gte: date,
-                    lt: nextMonth
-                }
-            }
-        })
+        const monthTotal = allIncome
+            .filter(t => t.createdAt >= date && t.createdAt < nextMonth)
+            .reduce((sum, t) => sum + (t.amount ? Number(t.amount) : 0), 0)
 
-        history.push({
+        return {
             name: date.toLocaleString('default', { month: 'short' }),
-            total: agg._sum.amount ? agg._sum.amount.toNumber() : 0
-        })
-    }
-
-    return history
+            total: monthTotal
+        }
+    })
 }
 
 async function getCountryStats() {

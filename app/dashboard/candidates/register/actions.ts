@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { candidateFormSchema } from './schema'
+import { invalidateCache } from '@/lib/cache'
 
 export async function createCandidate(formData: FormData) {
 
@@ -180,5 +181,7 @@ export async function createCandidate(formData: FormData) {
         }
     }
 
+    invalidateCache('dashboard')
+    invalidateCache('candidates')
     redirect('/dashboard/candidates')
 }

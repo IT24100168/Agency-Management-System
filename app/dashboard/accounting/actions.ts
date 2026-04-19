@@ -3,6 +3,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
+import { cachedFetch, invalidateCache } from '@/lib/cache'
 
 export async function getAccountingStats() {
     const totalIncome = await prisma.accounting.aggregate({
@@ -96,6 +97,7 @@ export async function addTransaction(formData: FormData) {
                 candidateId: candidateId || null
             }
         })
+        invalidateCache('dashboard')
         revalidatePath('/dashboard/accounting')
         return { success: true }
     } catch (error) {
@@ -105,15 +107,17 @@ export async function addTransaction(formData: FormData) {
 }
 
 export async function getCompactCandidates() {
-    try {
-        const candidates = await prisma.candidate.findMany({
-            select: { id: true, fullName: true, passportNo: true },
-            orderBy: { createdAt: 'desc' }
-        })
-        return candidates
-    } catch {
-        return []
-    }
+    return cachedFetch('candidates:compact', async () => {
+        try {
+            const candidates = await prisma.candidate.findMany({
+                select: { id: true, fullName: true, passportNo: true },
+                orderBy: { createdAt: 'desc' }
+            })
+            return candidates
+        } catch {
+            return []
+        }
+    }, 60) // Cache for 60 seconds
 }
 
 export async function deleteTransaction(id: string) {
@@ -121,6 +125,7 @@ export async function deleteTransaction(id: string) {
         await prisma.accounting.delete({
             where: { id }
         })
+        invalidateCache('dashboard')
         revalidatePath('/dashboard/accounting')
         return { success: true }
     } catch (error) {

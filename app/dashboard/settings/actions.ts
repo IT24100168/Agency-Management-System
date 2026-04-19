@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/session'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { invalidateCache } from '@/lib/cache'
 
 const passwordSchema = z.object({
     currentPassword: z.string().min(1),
@@ -93,6 +94,7 @@ export async function createUser(prevState: any, formData: FormData) {
         })
 
         revalidatePath('/dashboard/settings')
+        invalidateCache('staff')
         return { success: "User created successfully", error: "" }
     } catch (error) {
         console.error("User creation error:", error)
@@ -129,6 +131,7 @@ export async function deleteUser(userId: string) {
             where: { id: userId }
         })
         revalidatePath('/dashboard/settings')
+        invalidateCache('staff')
         return { success: "User deleted successfully", error: "" }
     } catch (error) {
         console.error("User deletion error:", error)
