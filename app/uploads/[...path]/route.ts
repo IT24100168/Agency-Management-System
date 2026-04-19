@@ -27,7 +27,9 @@ export async function GET(
                 'Cache-Control': 'public, max-age=31536000, immutable'
             }
         })
-    } catch (error) {
-        return new NextResponse('File not found', { status: 404 })
+    } catch (error: any) {
+        // Output the full error to the browser precisely so we can diagnose Hostinger's filesystem
+        const debugInfo = `File not found.\n\nTried to open:\n${join(process.cwd(), 'public', 'uploads', ...(await props.params).path)}\n\nError details:\n${error.message}`
+        return new NextResponse(debugInfo, { status: 404 })
     }
 }
