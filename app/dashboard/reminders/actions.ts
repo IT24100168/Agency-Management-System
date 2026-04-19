@@ -28,7 +28,7 @@ export async function addReminder(prevState: any, formData: FormData) {
             data: {
                 title,
                 dueDate: new Date(dueDate),
-                userId: session.userId
+                userId: session.userId as string
             }
         })
         revalidatePath('/dashboard')
@@ -45,7 +45,7 @@ export async function getReminders() {
 
     try {
         const reminders = await prisma.reminder.findMany({
-            where: { userId: session.userId },
+            where: { userId: session.userId as string },
             orderBy: { dueDate: 'asc' }
         })
         return reminders
@@ -65,7 +65,7 @@ export async function deleteReminder(id: string) {
             where: { id }
         })
 
-        if (!reminder || reminder.userId !== session.user.id) {
+        if (!reminder || reminder.userId !== session.userId) {
             return { error: "Unauthorized" }
         }
 

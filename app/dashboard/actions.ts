@@ -123,19 +123,20 @@ async function getCountryStats() {
 
     // Initialize defaults to 0
     targetCountries.forEach(c => stats[c] = 0)
+    stats['Other / Not Specified'] = 0
 
     group.forEach(g => {
-        if (g.jobCountry) {
-            // Normalized check? For now exact match or simple mapping if needed
-            // User said "Dubai" but usually it's "UAE". Let's assume input is "Dubai" or "United Arab Emirates"
-            // If DB has "United Arab Emirates" and we want "Dubai", we might miss it. 
-            // Stick to exact matches for now or add simple aliases if I knew the data.
-            // I'll assume the user enters "Dubai" as country.
-            if (stats.hasOwnProperty(g.jobCountry)) {
-                stats[g.jobCountry] = g._count.id
-            } else if (targetCountries.includes(g.jobCountry)) {
-                stats[g.jobCountry] = g._count.id
+        if (g.jobCountry && g.jobCountry.trim() !== "") {
+            const dbCountryStr = g.jobCountry.trim().toLowerCase()
+            const match = targetCountries.find(tc => tc.toLowerCase() === dbCountryStr)
+            
+            if (match) {
+                stats[match] += g._count.id
+            } else {
+                stats['Other / Not Specified'] += g._count.id
             }
+        } else {
+            stats['Other / Not Specified'] += g._count.id
         }
     })
 

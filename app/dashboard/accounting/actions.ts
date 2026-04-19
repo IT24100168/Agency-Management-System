@@ -43,7 +43,8 @@ export async function getRecentTransactions() {
             amount: Number(t.amount),
             description: t.description,
             date: t.createdAt.toISOString(),
-            candidateName: t.candidate?.fullName
+            candidateName: t.candidate?.fullName,
+            documentUrl: t.documentUrl
         }))
     } catch (error) {
         console.error("Error fetching transactions:", error)
@@ -62,11 +63,36 @@ export async function addTransaction(formData: FormData) {
     }
 
     try {
+        let documentUrl = undefined
+
+        const documentFile = formData.get('document_file') as File | null
+        if (documentFile && documentFile.size > 0 && documentFile.name !== 'undefined') {
+            try {
+                const { writeFile, mkdir } = await import('fs/promises')
+                const { join } = await import('path')
+
+                const bytes = await documentFile.arrayBuffer()
+                const buffer = Buffer.from(bytes)
+
+                const ext = documentFile.name.split('.').pop() || 'tmp'
+                const fileName = `receipt_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`
+                const uploadDir = join(process.cwd(), 'public', 'uploads', 'accounting')
+                
+                await mkdir(uploadDir, { recursive: true })
+                await writeFile(join(uploadDir, fileName), buffer)
+                
+                documentUrl = `/uploads/accounting/${fileName}`
+            } catch (error) {
+                console.error("Document upload failed:", error)
+            }
+        }
+
         await prisma.accounting.create({
             data: {
                 type,
                 amount,
                 description,
+                documentUrl,
                 candidateId: candidateId || null
             }
         })
@@ -87,5 +113,18 @@ export async function getCompactCandidates() {
         return candidates
     } catch {
         return []
+    }
+}
+
+export async function deleteTransaction(id: string) {
+    try {
+        await prisma.accounting.delete({
+            where: { id }
+        })
+        revalidatePath('/dashboard/accounting')
+        return { success: true }
+    } catch (error) {
+        console.error("Failed to delete transaction:", error)
+        return { error: "Database error" }
     }
 }

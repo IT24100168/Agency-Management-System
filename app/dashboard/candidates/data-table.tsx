@@ -63,14 +63,30 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="flex items-center py-4 gap-2">
+            <div className="flex flex-wrap items-center py-4 gap-2">
                 <Input
                     placeholder="Filter by name..."
                     value={(table.getColumn("full_name")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
                         table.getColumn("full_name")?.setFilterValue(event.target.value)
                     }
-                    className="max-w-sm"
+                    className="max-w-[200px]"
+                />
+                <Input
+                    placeholder="Filter by passport..."
+                    value={(table.getColumn("passport_no")?.getFilterValue() as string) ?? ""}
+                    onChange={(event) =>
+                        table.getColumn("passport_no")?.setFilterValue(event.target.value)
+                    }
+                    className="max-w-[200px]"
+                />
+                <Input
+                    placeholder="Filter by contact..."
+                    value={(table.getColumn("contact_number")?.getFilterValue() as string) ?? ""}
+                    onChange={(event) =>
+                        table.getColumn("contact_number")?.setFilterValue(event.target.value)
+                    }
+                    className="max-w-[200px]"
                 />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -149,23 +165,17 @@ export function DataTable<TData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    Previous
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    Next
-                </Button>
+            <div className="flex items-center justify-center space-x-2 py-4">
+                {table.getCanNextPage() ? (
+                    <Button
+                        variant="outline"
+                        onClick={() => table.setPageSize(table.getState().pagination.pageSize + 10)}
+                    >
+                        Show More Candidates
+                    </Button>
+                ) : (
+                    <span className="text-sm text-muted-foreground">Showing all candidates</span>
+                )}
             </div>
         </div>
     )

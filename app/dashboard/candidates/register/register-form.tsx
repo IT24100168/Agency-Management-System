@@ -42,7 +42,10 @@ interface RegisterFormProps {
 export function RegisterForm({ agents }: RegisterFormProps) {
     const [isPending, startTransition] = useTransition()
     const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+    const [showOtherCountry, setShowOtherCountry] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const presetCountries = ['Romania', 'Qatar', 'Kuwait', 'Dubai', 'Oman', 'Jordan', 'Saudi Arabia']
 
     const form = useForm({
         resolver: zodResolver(candidateFormSchema),
@@ -368,7 +371,47 @@ export function RegisterForm({ agents }: RegisterFormProps) {
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="job_country" render={({ field }) => (
-                                    <FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
+                                    <FormItem>
+                                        <FormLabel>Country</FormLabel>
+                                        {!showOtherCountry ? (
+                                            <Select onValueChange={(val) => {
+                                                if (val === 'Other') {
+                                                    setShowOtherCountry(true)
+                                                    field.onChange("")
+                                                } else {
+                                                    field.onChange(val)
+                                                }
+                                            }} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Country" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {presetCountries.map(c => (
+                                                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                                                    ))}
+                                                    <SelectItem value="Other">Other (Need to enter manually)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Enter country manually" autoFocus />
+                                                </FormControl>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    onClick={() => {
+                                                        setShowOtherCountry(false)
+                                                        field.onChange("")
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </FormItem>
                                 )} />
                                 <FormField control={form.control} name="job_post" render={({ field }) => (
                                     <FormItem><FormLabel>Post Applied</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>

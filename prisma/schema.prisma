@@ -21,6 +21,8 @@ model User {
   agentProfile      Agent?
   accountingEntries Accounting[]
   reminders         Reminder[]
+  notices           Notice[] @relation("NoticeAuthor")
+  targetedNotices   Notice[] @relation("NoticeTarget")
 
   @@map("users")
 }
@@ -129,6 +131,7 @@ model Accounting {
   type        String   // income, expense
   amount      Decimal  @db.Decimal(10, 2)
   description String?
+  documentUrl String?  @map("document_url")
   createdBy   String?  @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at")
 
@@ -161,4 +164,19 @@ model Reminder {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("reminders")
+}
+
+model Notice {
+  id                String   @id @default(uuid())
+  message           String   @db.Text
+  resolved          Boolean  @default(false)
+  staffAcknowledged Boolean  @default(false) @map("staff_acknowledged")
+  authorId          String   @map("author_id")
+  targetUserId      String?  @map("target_user_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  author     User  @relation("NoticeAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  targetUser User? @relation("NoticeTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@map("notices")
 }

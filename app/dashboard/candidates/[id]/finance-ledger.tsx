@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { addTransaction } from "./finance-actions"
-import { PlusCircle, ArrowDownCircle, ArrowUpCircle } from "lucide-react"
+import { PlusCircle, ArrowDownCircle, ArrowUpCircle, FileText } from "lucide-react"
 
 type Transaction = {
     id: string
     type: string
     amount: number
     description: string | null
+    document_url?: string | null
     created_at: string
 }
 
@@ -81,6 +82,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                                 <TableRow>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Description</TableHead>
+                                    <TableHead>Doc</TableHead>
                                     <TableHead>Type</TableHead>
                                     <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
@@ -88,7 +90,7 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                             <TableBody>
                                 {transactions.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                                             No transactions recorded yet.
                                         </TableCell>
                                     </TableRow>
@@ -97,6 +99,15 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                                         <TableRow key={t.id}>
                                             <TableCell>{new Date(t.created_at).toLocaleDateString()}</TableCell>
                                             <TableCell>{t.description || '-'}</TableCell>
+                                            <TableCell>
+                                                {t.document_url ? (
+                                                    <a href={t.document_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-1.5 rounded-full inline-block transition-colors">
+                                                        <FileText className="w-4 h-4" />
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell>
                                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                     {t.type}
@@ -127,6 +138,11 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                             <input type="hidden" name="candidate_id" value={candidateId} />
 
                             <div className="space-y-2">
+                                <Label>Date</Label>
+                                <Input name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} />
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label>Type</Label>
                                 <Select name="type" defaultValue="income">
                                     <SelectTrigger>
@@ -147,6 +163,12 @@ export function FinanceLedger({ candidateId, transactions }: { candidateId: stri
                             <div className="space-y-2">
                                 <Label>Description</Label>
                                 <Input name="description" required placeholder="e.g. Visa Fee" />
+                            </div>
+
+                            <div className="space-y-2 pb-2">
+                                <Label>Attach Document (Optional)</Label>
+                                <Input name="document_file" type="file" accept="image/*,.pdf" className="cursor-pointer file:cursor-pointer" />
+                                <p className="text-[10px] text-muted-foreground">PDFs and images supported</p>
                             </div>
 
                             <Button type="submit" className="w-full" disabled={isPending}>

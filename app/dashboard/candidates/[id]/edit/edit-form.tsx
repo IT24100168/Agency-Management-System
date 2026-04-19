@@ -22,8 +22,19 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { candidateFormSchema, type CandidateFormValues } from "../../register/schema"
-import { updateCandidate } from "./actions"
+import { updateCandidate, deleteCandidate } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useTransition, useState, useRef } from "react"
 import { Candidate } from "@/types/candidate"
@@ -37,6 +48,22 @@ export default function EditCandidateForm({ candidate }: EditCandidateFormProps)
     const [isPending, startTransition] = useTransition()
     const [photoPreview, setPhotoPreview] = useState<string | null>(candidate.photo || null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const presetCountries = ['Romania', 'Qatar', 'Kuwait', 'Dubai', 'Oman', 'Jordan', 'Saudi Arabia']
+    
+    let initialJobCountry = candidate.job_country || ""
+    let isOther = false
+
+    if (initialJobCountry) {
+        const match = presetCountries.find(c => c.toLowerCase() === initialJobCountry.toLowerCase().trim())
+        if (match) {
+            initialJobCountry = match
+        } else {
+            isOther = true
+        }
+    }
+
+    const [showOtherCountry, setShowOtherCountry] = useState(isOther)
 
     const form = useForm({
         resolver: zodResolver(candidateFormSchema),
@@ -80,7 +107,7 @@ export default function EditCandidateForm({ candidate }: EditCandidateFormProps)
             passport_place_issued: candidate.passport_place_issued ?? "",
 
             // Job
-            job_country: candidate.job_country ?? "",
+            job_country: initialJobCountry,
             job_post: candidate.job_post ?? "",
             job_salary: candidate.job_salary ?? "",
             contract_period: candidate.contract_period ?? "",
@@ -313,9 +340,49 @@ export default function EditCandidateForm({ candidate }: EditCandidateFormProps)
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <FormField control={form.control} name="job_country" render={({ field }) => (
-                                <FormItem><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                            )} />
+                                <FormField control={form.control} name="job_country" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Country</FormLabel>
+                                        {!showOtherCountry ? (
+                                            <Select onValueChange={(val) => {
+                                                if (val === 'Other') {
+                                                    setShowOtherCountry(true)
+                                                    field.onChange("")
+                                                } else {
+                                                    field.onChange(val)
+                                                }
+                                            }} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Country" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {presetCountries.map(c => (
+                                                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                                                    ))}
+                                                    <SelectItem value="Other">Other (Need to enter manually)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <FormControl>
+                                                    <Input {...field} placeholder="Enter country manually" autoFocus />
+                                                </FormControl>
+                                                <Button 
+                                                    type="button" 
+                                                    variant="ghost" 
+                                                    onClick={() => {
+                                                        setShowOtherCountry(false)
+                                                        field.onChange("")
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </FormItem>
+                                )} />
                             <FormField control={form.control} name="job_post" render={({ field }) => (
                                 <FormItem><FormLabel>Post Applied</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
                             )} />
@@ -347,9 +414,43 @@ export default function EditCandidateForm({ candidate }: EditCandidateFormProps)
                     </CardContent>
                 </Card>
 
-                <Button type="submit" size="lg" disabled={isPending} className="w-full">
-                    {isPending ? 'Updating...' : 'Update Candidate'}
-                </Button>
+                <div className="flex gap-4">
+                    <Button type="submit" size="lg" disabled={isPending} className="flex-1">
+                        {isPending ? 'Updating...' : 'Update Candidate'}
+                    </Button>
+
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive" size="lg">
+                                Delete Candidate
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete <strong>{candidate.full_name}</strong> and remove all of their associated data such as processing steps, documents, and finances.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                    className="bg-red-600 hover:bg-red-700"
+                                    disabled={isPending}
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        startTransition(async () => {
+                                            const res = await deleteCandidate(candidate.id)
+                                            if (res?.error) alert("Failed to delete: " + res.error)
+                                        })
+                                    }}
+                                >
+                                    {isPending ? 'Deleting...' : 'Delete Permanently'}
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </form>
         </Form>
     )

@@ -157,6 +157,7 @@ export async function updateCandidate(id: string, formData: FormData) {
             }
         })
 
+        revalidatePath('/dashboard')
         revalidatePath('/dashboard/candidates')
         revalidatePath(`/dashboard/candidates/${id}`)
 
@@ -168,5 +169,20 @@ export async function updateCandidate(id: string, formData: FormData) {
         }
     }
 
+    redirect('/dashboard/candidates')
+}
+
+export async function deleteCandidate(id: string) {
+    try {
+        await prisma.candidate.delete({
+            where: { id }
+        })
+        revalidatePath('/dashboard')
+        revalidatePath('/dashboard/candidates')
+    } catch (error) {
+        console.error("Failed to delete candidate:", error)
+        return { error: String(error) }
+    }
+    
     redirect('/dashboard/candidates')
 }

@@ -113,11 +113,17 @@ export function DocumentsList({ candidateId, documents }: { candidateId: string,
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Passport">Passport</SelectItem>
-                                    <SelectItem value="Medical">Medical Report</SelectItem>
-                                    <SelectItem value="Visa">Visa Copy</SelectItem>
                                     <SelectItem value="Photo">Photo</SelectItem>
+                                    <SelectItem value="ID Card">ID Card</SelectItem>
+                                    <SelectItem value="Birth Certificate">Birth Certificate</SelectItem>
+                                    <SelectItem value="Police Report">Police Report</SelectItem>
+                                    <SelectItem value="Medical">Medical</SelectItem>
+                                    <SelectItem value="Work Permit">Work Permit</SelectItem>
+                                    <SelectItem value="Visa">Visa</SelectItem>
+                                    <SelectItem value="Employment Contract">Employment Contract</SelectItem>
                                     <SelectItem value="Ticket">Ticket</SelectItem>
-                                    <SelectItem value="Contract">Employment Contract</SelectItem>
+                                    <SelectItem value="FBR">FBR</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

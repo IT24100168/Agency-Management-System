@@ -120,6 +120,21 @@ export function AddTransactionDialog({ candidates }: { candidates: Candidate[] }
                                 className="col-span-3"
                             />
                         </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="document_file" className="text-right">
+                                Attachment
+                            </Label>
+                            <div className="col-span-3">
+                                <Input
+                                    id="document_file"
+                                    name="document_file"
+                                    type="file"
+                                    accept="image/*,.pdf"
+                                    className="cursor-pointer file:cursor-pointer"
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-1">Optional PDF or Image</p>
+                            </div>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isPending}>

@@ -5,6 +5,12 @@ import { getReminders } from "./reminders/actions"
 import { OverviewChart } from "@/components/dashboard/overview-chart"
 import { AddReminderDialog } from "@/components/dashboard/reminders/add-reminder-dialog"
 import { ReminderList } from "@/components/dashboard/reminders/reminder-list"
+import { ReminderBanners } from "@/components/dashboard/reminders/reminder-banners"
+import { NoticeBanners } from "@/components/dashboard/notices/notice-banners"
+import { SendNoticeDialog } from "@/components/dashboard/notices/send-notice-dialog"
+import { AdminSendNoticeDialog } from "@/components/dashboard/notices/admin-send-notice-dialog"
+import { NoticeHistoryDialog } from "@/components/dashboard/notices/notice-history-dialog"
+import { getActiveNotices } from "./notices/actions"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -19,12 +25,15 @@ export default async function DashboardPage() {
     const stats = await getDashboardStats()
     const recentActivity = await getRecentActivity()
     const reminders = await getReminders()
+    const notices = await getActiveNotices()
 
     return (
         <div className="p-8 space-y-8">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
             </div>
+            <NoticeBanners notices={notices as any} isAdmin={!isStaff} />
+            <ReminderBanners reminders={reminders} />
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -121,7 +130,7 @@ export default async function DashboardPage() {
 
             <div>
                 <h3 className="text-lg font-medium mb-4">Recruitment by Country</h3>
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+                <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
                     {Object.entries(stats.countryStats).map(([country, count]) => {
                         const flags: Record<string, string> = {
                             'Romania': '🇷🇴',
@@ -130,7 +139,8 @@ export default async function DashboardPage() {
                             'Dubai': '🇦🇪', // UAE flag for Dubai
                             'Oman': '🇴🇲',
                             'Jordan': '🇯🇴',
-                            'Saudi Arabia': '🇸🇦'
+                            'Saudi Arabia': '🇸🇦',
+                            'Other / Not Specified': '🌍'
                         }
                         return (
                             <Card key={country}>
@@ -161,11 +171,26 @@ export default async function DashboardPage() {
                     </Card>
                 )}
                 <div className={!isStaff ? "col-span-3 space-y-4" : "space-y-4"}>
+                    {isStaff && (
+                        <Card className="border-orange-200 dark:border-orange-900 border-2">
+                            <CardContent className="p-4">
+                                <SendNoticeDialog />
+                            </CardContent>
+                        </Card>
+                    )}
+                    {!isStaff && (
+                        <Card className="border-purple-200 dark:border-purple-900 border-2">
+                            <CardContent className="p-4">
+                                <AdminSendNoticeDialog />
+                            </CardContent>
+                        </Card>
+                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Actions</CardTitle>
                         </CardHeader>
-                        <CardContent className="grid gap-2">
+                        <CardContent className="space-y-2">
+                            <NoticeHistoryDialog isAdmin={!isStaff} />
                             <Link href="/dashboard/candidates?new=true" className="w-full">
                                 <Button variant="outline" className="w-full justify-start">
                                     <Users className="mr-2 h-4 w-4" />
