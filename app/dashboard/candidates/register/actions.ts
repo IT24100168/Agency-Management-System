@@ -14,6 +14,10 @@ export async function createCandidate(formData: FormData) {
         return (val && val !== '') ? val as string : undefined
     }
 
+    // Resolve "Other" fields — use the _other text if the main field is "Other"
+    const resolveOther = (main: string | undefined, other: string | undefined) =>
+        main === 'Other' ? (other || undefined) : main
+
     const rawData = {
         full_name: get('full_name'),
         registration_number: get('registration_number'),
@@ -21,22 +25,22 @@ export async function createCandidate(formData: FormData) {
         name_with_initials: get('name_with_initials'),
         nic: get('nic'),
         dob: get('dob'),
-        age: get('age'), // Will be coerced by Zod
+        age: get('age'),
         gender: get('gender'),
-        photo: get('photo'), // URL from hidden input if pre-uploaded, OR handled below if file
+        photo: get('photo'),
 
         // Personal
         home_town: get('home_town'),
         place_of_birth: get('place_of_birth'),
-        gs_section: get('gs_section'),
-        police_area: get('police_area'),
-        aga_division: get('aga_division'),
+        address: get('address'),
+        district: get('district'),
+        province: get('province'),
         nationality: get('nationality'),
         religion: get('religion'),
+        religion_other: get('religion_other'),
         marital_status: get('marital_status'),
         contact_number: get('contact_number'),
         secondary_contact_number: get('secondary_contact_number'),
-        address: get('address'),
         weight: get('weight'),
         height: get('height'),
         children_count: get('children_count'),
@@ -53,13 +57,21 @@ export async function createCandidate(formData: FormData) {
         passport_exp_date: get('passport_exp_date'),
         passport_place_issued: get('passport_place_issued'),
         passport_status: get('passport_status'),
+        passport_type: get('passport_type'),
 
         // Job
         job_country: get('job_country'),
+        job_category: get('job_category'),
+        job_category_other: get('job_category_other'),
         job_post: get('job_post'),
         job_salary: get('job_salary'),
         contract_period: get('contract_period'),
         experience: get('experience'),
+
+        // Education & Language
+        education_level: get('education_level'),
+        education_other: get('education_other'),
+        english_proficiency: get('english_proficiency'),
 
         // Remarks
         remarks: get('remarks'),
@@ -97,7 +109,7 @@ export async function createCandidate(formData: FormData) {
                 try {
                     const sharp = require('sharp');
                     buffer = await sharp(buffer)
-                        .resize(600, 600, { fit: 'cover' }) // Passport photo style
+                        .resize(600, 600, { fit: 'cover' })
                         .jpeg({ quality: 80 })
                         .toBuffer();
                 } catch (e) {
@@ -115,6 +127,12 @@ export async function createCandidate(formData: FormData) {
         }
     }
 
+    // Resolve "Other" values before writing to DB
+    const resolvedReligion = resolveOther(data.religion, data.religion_other)
+    const resolvedJobCategory = resolveOther(data.job_category, data.job_category_other)
+    const resolvedEducation = resolveOther(data.education_level, data.education_other)
+    const resolvedJobCountry = data.job_country
+
     try {
         await prisma.candidate.create({
             data: {
@@ -126,19 +144,18 @@ export async function createCandidate(formData: FormData) {
                 dob: data.dob ? new Date(data.dob) : null,
                 age: data.age,
                 gender: data.gender,
-                photo: photoPath || data.photo, // Use file upload path OR string url
+                photo: photoPath || data.photo,
 
                 homeTown: data.home_town,
                 placeOfBirth: data.place_of_birth,
-                gsSection: data.gs_section,
-                policeArea: data.police_area,
-                agaDivision: data.aga_division,
+                address: data.address,
+                district: data.district,
+                province: data.province,
                 nationality: data.nationality,
-                religion: data.religion,
+                religion: resolvedReligion,
                 maritalStatus: data.marital_status,
                 contactNumber: data.contact_number,
                 secondaryContactNumber: data.secondary_contact_number,
-                address: data.address,
                 weight: data.weight,
                 height: data.height,
                 childrenCount: data.children_count,
@@ -153,12 +170,18 @@ export async function createCandidate(formData: FormData) {
                 passportExpDate: data.passport_exp_date ? new Date(data.passport_exp_date) : null,
                 passportPlaceIssued: data.passport_place_issued,
                 passportStatus: data.passport_status,
+                passportType: data.passport_type,
 
-                jobCountry: data.job_country,
+                jobCountry: resolvedJobCountry,
+                jobCategory: resolvedJobCategory,
                 jobPost: data.job_post,
                 jobSalary: data.job_salary,
                 contractPeriod: data.contract_period,
                 experience: data.experience,
+
+                educationLevel: resolvedEducation,
+                educationOther: data.education_level !== 'Other' ? undefined : data.education_other,
+                englishProficiency: data.english_proficiency,
 
                 remarks: data.remarks,
 

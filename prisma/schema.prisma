@@ -61,15 +61,14 @@ model Candidate {
   // 2. Personal Details
   homeTown      String?  @map("home_town")
   placeOfBirth  String?  @map("place_of_birth")
-  gsSection     String?  @map("gs_section")
-  policeArea    String?  @map("police_area")
-  agaDivision   String?  @map("aga_division")
+  address       String?  // Full home address
+  district      String?  // Sri Lanka district
+  province      String?  // Sri Lanka province
   nationality   String?
   religion      String?
   maritalStatus String?  @map("marital_status")
   contactNumber String?  @map("contact_number") // Mobile/Phone
   secondaryContactNumber String? @map("secondary_contact_number")
-  address       String?  // Guardian Address or user address? User listed "Guardian Address" separately. This might be candidate's address.
   weight        Decimal? @db.Decimal(5, 2)
   height        Decimal? @db.Decimal(5, 2) // cm or feet? Storing as decimal.
   childrenCount Int?     @map("children_count")
@@ -85,16 +84,23 @@ model Candidate {
   passportIssuedDate DateTime? @map("passport_issued_date")
   passportExpDate   DateTime? @map("passport_exp_date")
   passportPlaceIssued String? @map("passport_place_issued")
-  passportStatus      String? @map("passport_status") // 'In Custody', 'No'
+  passportStatus      String? @map("passport_status") // 'In Custody', 'With Candidate', etc.
+  passportType        String? @map("passport_type") // 'Ordinary', 'Official', 'Diplomatic'
 
   // 4. Job Details
   jobCountry    String?  @map("job_country")
+  jobCategory   String?  @map("job_category") // Housemaid, Driver, etc.
   jobPost       String?  @map("job_post")
   jobSalary     Decimal? @db.Decimal(10, 2) @map("job_salary")
   contractPeriod String? @map("contract_period")
-  experience    String?  @db.Text
+  experience    String?  @map("experience") // Newbie, 1-2 Years, etc.
 
-  // 5. Education & Remarks
+  // 5. Education & Language
+  educationLevel    String?  @map("education_level")   // O/L, A/L, Degree, etc.
+  educationOther    String?  @map("education_other")   // Free text if 'Other'
+  englishProficiency String? @map("english_proficiency") // None, Basic, Fair, Fluent
+
+  // Remarks
   remarks       String?  @db.Text
 
   // System
